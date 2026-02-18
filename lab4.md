@@ -6,26 +6,41 @@
 
 ## Hardware Wiring Guide
 
-### LCD Wiring (HD44780 Compatible 16x2 LCD)
+### LCD Wiring (SparkFun ADM1602K - 16x2 Character LCD)
+
+The **ADM1602K** is a standard 16x2 character LCD module with LED backlight, compatible with the HD44780 controller. The E349456 is a batch/lot number.
+
+**LCD Specifications:**
+- Display: 16 characters x 2 lines
+- Controller: HD44780 compatible
+- Interface: 8-bit or 4-bit parallel
+- Backlight: LED (yellow-green)
+- Operating Voltage: 5V DC
 
 | LCD Pin | Name | Connection to ATmega328P | Description |
 |---------|------|--------------------------|-------------|
-| 1 | VSS | GND | Ground |
-| 2 | VDD | +5V | Power Supply |
-| 3 | V0 | Potentiometer Middle | Contrast Control (10k pot, ends to VCC/GND) |
-| 4 | RS | PC0 | Register Select |
-| 5 | RW | PC1 | Read/Write |
-| 6 | E | PC2 | Enable |
-| 7 | D0 | GND (or NC for 4-bit mode) | Data Bit 0 |
-| 8 | D1 | GND (or NC for 4-bit mode) | Data Bit 1 |
-| 9 | D2 | GND (or NC for 4-bit mode) | Data Bit 2 |
-| 10 | D3 | GND (or NC for 4-bit mode) | Data Bit 3 |
-| 11 | D4 | PB0 | Data Bit 4 |
-| 12 | D5 | PB1 | Data Bit 5 |
-| 13 | D6 | PB2 | Data Bit 6 |
-| 14 | D7 | PB3 | Data Bit 7 |
-| 15 | A | +5V (via 220Ω resistor) | Backlight Anode |
-| 16 | K | GND | Backlight Cathode |
+| 1 | VSS | GND | Ground (0V) |
+| 2 | VDD | +5V | Power Supply (+5V) |
+| 3 | V0 | Potentiometer Wiper | Contrast Control (10k pot: ends to VCC/GND, wiper to V0) |
+| 4 | RS | PC0 | Register Select (0=Command, 1=Data) |
+| 5 | R/W | PC1 | Read/Write (0=Write, 1=Read) |
+| 6 | E | PC2 | Enable (data latched on falling edge) |
+| 7 | D0 | PB0 | Data Bit 0 (LSB) |
+| 8 | D1 | PB1 | Data Bit 1 |
+| 9 | D2 | PB2 | Data Bit 2 |
+| 10 | D3 | PB3 | Data Bit 3 |
+| 11 | D4 | PB4 | Data Bit 4 |
+| 12 | D5 | PB5 | Data Bit 5 |
+| 13 | D6 | PB6 | Data Bit 6 |
+| 14 | D7 | PB7 | Data Bit 7 (MSB) |
+| 15 | A (LED+) | +5V (via 220Ω resistor) | Backlight Anode (+) |
+| 16 | K (LED-) | GND | Backlight Cathode (-) |
+
+**Important Notes for ADM1602K:**
+- Pin 1 is on the LEFT when viewing the LCD from the front (text facing you) with pins at the top
+- The contrast potentiometer is critical - without proper adjustment, you may see nothing or black boxes
+- For 8-bit mode, all data pins (D0-D7) must be connected
+- The backlight requires a current-limiting resistor (220Ω typical)
 
 ### Keypad Wiring (4x4 Matrix)
 
@@ -999,18 +1014,19 @@ void lcd_set_cursor(char row, char col)
 
 ## Wiring Diagram Summary
 
+### Complete System Wiring (SparkFun ADM1602K LCD)
+
 ```
                     ATmega328P
                    +-----------+
+    LCD D0 <------| PB0   PB7 |------> LCD D7
+    LCD D1 <------| PB1   PB6 |------> LCD D6
+    LCD D2 <------| PB2   PB5 |------> LCD D5
+    LCD D3 <------| PB3   PB4 |------> LCD D4
                    |           |
     LCD RS <------| PC0       |
     LCD RW <------| PC1       |
     LCD E  <------| PC2       |
-                   |           |
-    LCD D4 <------| PB0       |
-    LCD D5 <------| PB1       |
-    LCD D6 <------| PB2       |
-    LCD D7 <------| PB3       |
                    |           |
     Key R1 <------| PD0       |
     Key R2 <------| PD1       |
@@ -1027,16 +1043,25 @@ void lcd_set_cursor(char row, char col)
   Btn Down <------| PA3       |
                    +-----------+
 
-LCD Additional Connections:
-  - VSS (Pin 1) -> GND
-  - VDD (Pin 2) -> +5V
-  - V0 (Pin 3) -> Potentiometer wiper (contrast)
-  - Backlight A -> +5V via 220Ω
-  - Backlight K -> GND
+LCD (ADM1602K) Power & Control Connections:
+  ┌─────────────────────────────────────┐
+  │ LCD Pin 1 (VSS)    ─────> GND       │
+  │ LCD Pin 2 (VDD)    ─────> +5V       │
+  │ LCD Pin 3 (V0)     ─────> 10k Pot   │
+  │                        (wiper)      │
+  │ LCD Pin 15 (A)     ─────> +5V       │
+  │                        via 220Ω     │
+  │ LCD Pin 16 (K)     ─────> GND       │
+  └─────────────────────────────────────┘
 
-Pushbutton Connections:
-  - Each button between pin and GND
-  - Internal pull-ups enabled (active low)
+Contrast Potentiometer Wiring:
+      +5V ───┬───[10k Pot]───┬─── GND
+             │               │
+            ─┴─ (V0 to LCD) ─┴─
+
+Pushbutton Connections (Active Low):
+  Each button: Pin ───[Button]─── GND
+  (Internal pull-up resistors enabled in code)
 ```
 
 ---
@@ -1045,14 +1070,40 @@ Pushbutton Connections:
 
 ### Q1: How do you wire the LCD to the microcontroller?
 
-The LCD is wired using 8-bit parallel interface mode:
-1. **Power**: VSS to GND, VDD to +5V
-2. **Contrast**: V0 to a 10k potentiometer (adjusts display contrast)
-3. **Control pins**: RS, RW, and E connect to PORTC pins (PC0, PC1, PC2)
-4. **Data pins**: D4-D7 connect to PORTB pins (PB0-PB3) for 8-bit data transfer
-5. **Backlight**: Anode to +5V via 220Ω resistor, Cathode to GND
+The **SparkFun ADM1602K LCD** is wired using 8-bit parallel interface mode:
 
-The RS pin selects between command mode (0) and data mode (1). The RW pin selects read (1) or write (0) operation. The E pin enables data transfer on its falling edge.
+1. **Power Connections**:
+   - Pin 1 (VSS) to GND
+   - Pin 2 (VDD) to +5V
+
+2. **Contrast Control**:
+   - Pin 3 (V0) to the wiper of a 10k potentiometer
+   - Potentiometer ends connect to VCC and GND
+   - Adjust potentiometer to set display contrast (typically mid-position)
+
+3. **Control Pins** (connect to PORTC):
+   - Pin 4 (RS) to PC0 - Register Select
+   - Pin 5 (R/W) to PC1 - Read/Write
+   - Pin 6 (E) to PC2 - Enable
+
+4. **Data Pins** (connect to PORTB):
+   - Pin 7 (D0) to PB0
+   - Pin 8 (D1) to PB1
+   - Pin 9 (D2) to PB2
+   - Pin 10 (D3) to PB3
+   - Pin 11 (D4) to PB4
+   - Pin 12 (D5) to PB5
+   - Pin 13 (D6) to PB6
+   - Pin 14 (D7) to PB7
+
+5. **Backlight** (for ADM1602K with LED backlight):
+   - Pin 15 (A/LED+) to +5V via 220Ω current-limiting resistor
+   - Pin 16 (K/LED-) to GND
+
+**Control Pin Functions**:
+- **RS (Register Select)**: 0 = Command mode, 1 = Data mode
+- **R/W (Read/Write)**: 0 = Write operation, 1 = Read operation
+- **E (Enable)**: Data is latched on the falling edge (HIGH to LOW transition)
 
 ### Q2: How is keypad organized internally?
 
@@ -1078,11 +1129,48 @@ Both use the same HD44780 controller and command set. The main difference is the
 
 ---
 
-## Troubleshooting Tips
+## Troubleshooting Tips (SparkFun ADM1602K)
 
-1. **LCD shows nothing**: Check contrast potentiometer adjustment
-2. **LCD shows black boxes**: Contrast too high or initialization failed
-3. **Keypad not responding**: Check row/column connections, verify pull-ups
-4. **Wrong characters displayed**: Verify data pin connections (D0-D7)
-5. **Flickering display**: Increase delay times in LCD functions
-6. **Multiple key presses detected**: Add proper debounce delays
+### LCD Issues
+
+1. **LCD shows nothing (blank screen)**:
+   - Check power connections (VSS to GND, VDD to +5V)
+   - Adjust contrast potentiometer (most common issue!)
+   - Verify backlight is working (should glow when powered)
+   - Check all data and control pin connections
+
+2. **LCD shows black boxes (solid rectangles) on top row**:
+   - Contrast is set too high - adjust potentiometer
+   - LCD not properly initialized - check initialization code
+   - Check RS, R/W, and E pin connections
+
+3. **LCD shows random/garbage characters**:
+   - Verify data pin connections (D0-D7 to PB0-PB7)
+   - Check for loose connections
+   - Ensure proper timing delays in LCD functions
+   - Verify 8-bit mode initialization (0x38 command)
+
+4. **Backlight not working**:
+   - Check LED+ (Pin 15) and LED- (Pin 16) connections
+   - Verify 220Ω current-limiting resistor is in series with LED+
+   - Some ADM1602K variants may have different backlight voltages
+
+5. **Display flickers or is unstable**:
+   - Increase delay times in LCD functions
+   - Check power supply stability
+   - Add decoupling capacitor (100µF) near LCD power pins
+
+### Keypad Issues
+
+6. **Keypad not responding**:
+   - Check row connections (PD0-PD3) and column connections (PD4-PD7)
+   - Verify internal pull-ups are enabled in code
+   - Test each button with a multimeter
+
+7. **Multiple/duplicate key presses detected**:
+   - Add proper debounce delays (50-200ms)
+   - Check for short circuits between row/column lines
+
+8. **Wrong key detected**:
+   - Verify row/column mapping matches code
+   - Check keypad pinout against code assumptions
