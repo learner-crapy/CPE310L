@@ -6,7 +6,40 @@
 
 ## Hardware Wiring Guide
 
-### LCD Wiring (SparkFun ADM1602K - 16x2 Character LCD)
+### UNLV ECE Development Board Users (Recommended)
+
+If you are using the **UNLV ECE Development Board** with built-in LCD header, the LCD connections are pre-routed on the PCB. Connect your SparkFun ADM1602K LCD directly to the **LCD Header** (Location 1 on the board).
+
+**UNLV Board LCD Connections:**
+
+| Board Feature | Location | Description |
+|---------------|----------|-------------|
+| LCD Header | Location 1 | 16-pin header for LCD module |
+| CONTRAST Potentiometer | Location 2 | Built-in contrast adjustment (no external pot needed) |
+| DATA Header | Location 3 | LCD data pins connection |
+| Control Pins (RS, RW, EN) | Location 21 | LCD control signal header |
+
+**To use the LCD on UNLV Board:**
+1. Insert the ADM1602K LCD into the LCD header (Location 1) - ensure pin 1 alignment
+2. Adjust contrast using the built-in potentiometer (Location 2)
+3. The LCD data and control pins are pre-wired to specific microcontroller PORTs
+
+**Verify your board's PORT mappings by checking:**
+- The board silkscreen labels near the DATA header (Location 3)
+- The UNLV 328P Board Manual for exact pin-to-PORT mapping
+- Typical configuration: Data on PORTB, Control on PORTC
+
+**Based on the original lab document, the UNLV board uses:**
+- **Data PORT**: PORTB (PB0-PB7 for LCD D0-D7)
+- **RS (Register Select)**: PC0
+- **RW (Read/Write)**: PC1
+- **E (Enable)**: PC2
+
+> **Important**: Before running the code, verify these connections match your specific board revision by checking the labels on the DATA header (Location 3) and Control header (Location 21).
+
+---
+
+### Manual Wiring (SparkFun ADM1602K - 16x2 Character LCD)
 
 The **ADM1602K** is a standard 16x2 character LCD module with LED backlight, compatible with the HD44780 controller. The E349456 is a batch/lot number.
 
@@ -43,6 +76,16 @@ The **ADM1602K** is a standard 16x2 character LCD module with LED backlight, com
 - The backlight requires a current-limiting resistor (220Ω typical)
 
 ### Keypad Wiring (4x4 Matrix)
+
+#### UNLV Board Users
+The UNLV development board has a **built-in keypad header** at Location 5. The keypad pins (C1-C4, R1-R4) are pre-routed to the microcontroller.
+
+**UNLV Board Keypad Connections:**
+- Connect your 4x4 keypad to the keypad header at Location 5
+- Check the board silkscreen or manual for the exact PORT assignments
+- Typical configuration: Keypad on PORTD
+
+#### Manual Wiring (for custom boards)
 
 | Keypad | Connection to ATmega328P | Type |
 |--------|--------------------------|------|
